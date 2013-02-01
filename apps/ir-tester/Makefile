@@ -77,7 +77,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(CHIBIOS)/os/various \
          $(CMSIS)/CM3/CoreSupport \
          $(CMSIS)/CM3/DeviceSupport/ST/STM32F10x \
-         $(CMSIS)/STM32F10x_StdPreiph_Driver/inc \
+         $(CMSIS)/STM32F10x_StdPeriph_Driver/inc
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -89,7 +89,6 @@ CSRC = $(PORTSRC) \
        $(BOARDSRC) \
        $(CHIBIOS)/os/various/evtimer.c \
        $(CHIBIOS)/os/various/syscalls.c \
-       $(CMSIS)/STM32F10x_StdPreiph_Driver/src/*.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
