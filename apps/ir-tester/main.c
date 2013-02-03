@@ -1,5 +1,6 @@
 #include <ch.h>
 #include <hal.h>
+#include <chprintf.h>
 #include <stm32f10x.h>
 
 // Simple thread for green LED blinkng.
@@ -78,10 +79,13 @@ int main(void) {
     icuStart(&ICUD2, &icucfg);
     icuEnable(&ICUD2);
 
+    chprintf((BaseSequentialStream *) &SD1, "MCU run");
 
     // Main thread.
     while (!chThdShouldTerminate()) {
         chThdSleepMilliseconds(MS2ST(500));
+        chprintf((BaseSequentialStream *) &SD1, "%i, %i\r\n",
+            (uint32_t) last_width, (uint32_t) last_period);
     }
 
     icuDisable(&ICUD2);
