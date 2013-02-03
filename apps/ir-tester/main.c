@@ -27,7 +27,7 @@ void meandre_tim17(void) {
     TIM17->PSC = 0;
     // PWM Period: 1ms
     TIM17->ARR = 667 - 1;
-    // Duty cycle: 80%
+    // Duty cycle: 50%
     TIM17->CCR1 = 333;
     // Uncomment to change polarity
     //TIM2->CCER |= TIM_CCER_CC2P;
