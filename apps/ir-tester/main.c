@@ -1,9 +1,6 @@
 #include <ch.h>
 #include <hal.h>
 #include <stm32f10x.h>
-#include <stm32f10x_gpio.h>
-#include <stm32f10x_rcc.h>
-
 
 // Simple thread for green LED blinkng.
 static WORKING_AREA(waBlinker, 128);
@@ -18,14 +15,25 @@ static msg_t blinker(void *arg) {
 }
 
 void meandre_tim17(void) {
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE); // port B clock enable
-    RCC->APB2ENR |= RCC_APB2ENR_TIM17EN; // enable TIM17
-    TIM17->CCMR1 |= (TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0);
-    TIM17->CCER |= TIM_CCER_CC1E; // 1 output enable
+    RCC->APB2ENR |= RCC_APB2ENR_TIM17EN;
+
+    // Prescaler keeps zero to allow control PWM frequency
+    TIM17->PSC = 0;
+    // Autoreload register keeps 24MHz/36kHz value
+    TIM17->ARR = 667 - 1;
+    TIM17->CCR1 =333; // 50% duty cycle
+
+    // Output Compare PWM1 Mode
+    TIM17->CCMR1 |= (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1);
+
+    // Capture/Compare 1 output enable, ie PB9
+    TIM17->CCER |= TIM_CCER_CC1E;
+
+    // Main Output enable
     TIM17->BDTR |= TIM_BDTR_MOE;
-    TIM17->ARR = 30000;
-    TIM17->CCR1 =15000;
-    TIM17->CR1 |= TIM_CR1_CEN ;// TIM17 start
+
+    // TIM17 start and enable autoreload
+    TIM17->CR1 |= (TIM_CR1_CEN | TIM_CR1_ARPE);
 }
 
 // Program entry point.

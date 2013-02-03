@@ -86,8 +86,6 @@ CSRC = $(PORTSRC) \
        $(BOARDSRC) \
        $(CHIBIOS)/os/various/evtimer.c \
        $(CHIBIOS)/os/various/syscalls.c \
-       $(CMSIS)/STM32F10x_StdPeriph_Driver/src/stm32f10x_gpio.c \
-       $(CMSIS)/STM32F10x_StdPeriph_Driver/src/stm32f10x_rcc.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -163,16 +161,13 @@ CPPWARN = -Wall -Wextra
 #
 
 # List all default C defines here, like -D_DEBUG=1
-DDEFS = -DUSE_STDPERIPH_DRIVER
+DDEFS =
 
 # List all default ASM defines here, like -D_DEBUG=1
 DADEFS =
 
 # List all default directories to look for include files here
-DINCDIR = \
-        $(CMSIS)/CM3/CoreSupport \
-        $(CMSIS)/CM3/DeviceSupport/ST/STM32F10x \
-        $(CMSIS)/STM32F10x_StdPeriph_Driver/inc
+DINCDIR =
 
 # List the default directory to look for the libraries here
 DLIBDIR =
