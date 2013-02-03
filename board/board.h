@@ -54,6 +54,7 @@
  */
 #define GPIOB_ARMKA_LED         0
 #define GPIOB_IR_TX             9
+#define GPIOA_ICU_LED           4
 
 
 /*
@@ -82,11 +83,11 @@
 
  /* Port A setup.
  * Everything input with pull-up except:
- * PA0  - Push Pull output 2MHz. (LED via GPIO).
+ * PA0  - Push Pull output 50MHz. (ICU).
  * PA9  - Alternate output  (USART1 TX).
  * PA10 - Normal input      (USART1 RX).
  */
-#define VAL_GPIOACRL            0x88888882      /*  PA7...PA0 */
+#define VAL_GPIOACRL            0x8882888B      /*  PA7...PA0 */
 #define VAL_GPIOACRH            0x888888B8      /* PA15...PA8 */
 #define VAL_GPIOAODR            0xFFFFFFFF
 
