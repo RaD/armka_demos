@@ -83,19 +83,20 @@
 
  /* Port A setup.
  * Everything input with pull-up except:
- * PA0  - Push Pull output 50MHz. (ICU).
- * PA9  - Alternate output  (USART1 TX).
- * PA10 - Normal input      (USART1 RX).
+ * PA0  - Digital input.                        (ICU input)
+ * PA4  - Push Pull output 2MHz.                (ICU LED)
+ * PA9  - Alternate Push Pull output 50MHz.     (USART1 TX)
+ * PA10 - Digital input.                        (USART1 RX)
  */
-#define VAL_GPIOACRL            0x8882888B      /*  PA7...PA0 */
-#define VAL_GPIOACRH            0x888888B8      /* PA15...PA8 */
+#define VAL_GPIOACRL            0x88828884      /*  PA7...PA0 */
+#define VAL_GPIOACRH            0x888884B8      /* PA15...PA8 */
 #define VAL_GPIOAODR            0xFFFFFFFF
 
 /*
  * Port B setup.
  * Everything input with pull-up except:
- * PB0  - Push Pull output 2MHz. (LED via GPIO).
- * PB9  - Alternate Push Pull output 50MHz. (IR TX via Timer).
+ * PB0  - Push Pull output 2MHz.                (LED via GPIO)
+ * PB9  - Alternate Push Pull output 50MHz      (IR TX via Timer)
  */
 #define VAL_GPIOBCRL            0x88888882      /*  PB7...PB0 */
 #define VAL_GPIOBCRH            0x888888B8      /* PB15...PB8 */

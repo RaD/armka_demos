@@ -26,7 +26,7 @@ void meandre_tim17(void) {
     TIM17->CCMR1 |= (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1);
     // Prescaler keeps zero to allow control PWM frequency
     TIM17->PSC = 0;
-    // PWM Period: 1ms
+    // PWM Frequency 36 kHz
     TIM17->ARR = 667 - 1;
     // Duty cycle: 50%
     TIM17->CCR1 = 333;
@@ -41,7 +41,8 @@ void meandre_tim17(void) {
 }
 
 
-icucnt_t last_width, last_period;
+static icucnt_t last_width = 0;
+static icucnt_t last_period = 0;
 
 // Callback for pulse width measurement.
 static void icu_width_cb(ICUDriver *icup) {
@@ -70,26 +71,39 @@ int main(void) {
     halInit();
     chSysInit();
 
+    // enable serial interface
+    sdStart(&SD1, NULL);
+
     meandre_tim17();
 
     // Run blinker
     Thread* th_blinker = chThdCreateStatic(waBlinker, sizeof(waBlinker), NORMALPRIO, blinker, NULL);
 
+    chprintf((BaseSequentialStream *) &SD1, "\nMeandre started\n");
+
     // Run ICU
     icuStart(&ICUD2, &icucfg);
     icuEnable(&ICUD2);
 
-    chprintf((BaseSequentialStream *) &SD1, "MCU run");
+    palClearPad(GPIOA, GPIOA_ICU_LED); // on
+    chThdSleepMilliseconds(MS2ST(500));
+
+    chprintf((BaseSequentialStream *) &SD1, "MCU run\n");
 
     // Main thread.
     while (!chThdShouldTerminate()) {
         chThdSleepMilliseconds(MS2ST(500));
-        chprintf((BaseSequentialStream *) &SD1, "%i, %i\r\n",
-            (uint32_t) last_width, (uint32_t) last_period);
+
+        chprintf((BaseSequentialStream *) &SD1, "Period: %d\nWidth: %d\n\n", last_period, last_width);
+
+        if (last_period == 0 && last_width == 0) {
+            palSetPad(GPIOA, GPIOA_ICU_LED); // off
+        } else {
+            palClearPad(GPIOA, GPIOA_ICU_LED); // on
+        }
     }
 
     icuDisable(&ICUD2);
     icuStop(&ICUD2);
-
     chThdTerminate(th_blinker);
 }
