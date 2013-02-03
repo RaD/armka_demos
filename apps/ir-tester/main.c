@@ -15,25 +15,28 @@ static msg_t blinker(void *arg) {
 }
 
 void meandre_tim17(void) {
+    //Enable clock for the timer
     RCC->APB2ENR |= RCC_APB2ENR_TIM17EN;
-
+    // Enable ARR preloading
+    TIM17->CR1 |= TIM_CR1_ARPE;
+    // Enable CCR1 preloading
+    TIM17->CCMR1 |= TIM_CCMR1_OC2PE;
+    // PWM mode 1: OC1M = 110
+    TIM17->CCMR1 |= (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1);
     // Prescaler keeps zero to allow control PWM frequency
     TIM17->PSC = 0;
-    // Autoreload register keeps 24MHz/36kHz value
+    // PWM Period: 1ms
     TIM17->ARR = 667 - 1;
-    TIM17->CCR1 =333; // 50% duty cycle
-
-    // Output Compare PWM1 Mode
-    TIM17->CCMR1 |= (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1);
-
-    // Capture/Compare 1 output enable, ie PB9
+    // Duty cycle: 80%
+    TIM17->CCR1 = 333;
+    // Uncomment to change polarity
+    //TIM2->CCER |= TIM_CCER_CC2P;
+    // Enable Capture/Compare output 1, ie PB9
     TIM17->CCER |= TIM_CCER_CC1E;
-
     // Main Output enable
     TIM17->BDTR |= TIM_BDTR_MOE;
-
-    // TIM17 start and enable autoreload
-    TIM17->CR1 |= (TIM_CR1_CEN | TIM_CR1_ARPE);
+    // Start timer
+    TIM17->CR1 |= TIM_CR1_CEN;
 }
 
 // Program entry point.
