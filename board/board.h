@@ -93,11 +93,11 @@
 /*
  * Port B setup.
  * Everything input with pull-up except:
- * PB0  - Push Pull output 50MHz. (LED via GPIO).
+ * PB0  - Push Pull output 2MHz. (LED via GPIO).
  * PB9  - Alternate Push Pull output 50MHz. (IR TX via Timer).
  */
 #define VAL_GPIOBCRL            0x88888882      /*  PB7...PB0 */
-#define VAL_GPIOBCRH            0x888888A8      /* PB15...PB8 */
+#define VAL_GPIOBCRH            0x888888B8      /* PB15...PB8 */
 #define VAL_GPIOBODR            0xFFFFFFFF
 
 
