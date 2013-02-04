@@ -53,8 +53,9 @@
  * IO pins assignments.
  */
 #define GPIOB_ARMKA_LED         0
-#define GPIOB_IR_TX             9
 #define GPIOA_ICU_LED           4
+#define GPIOB_IR_TX             9
+#define GPIOA_IR_RX             7
 
 
 /*
@@ -85,6 +86,7 @@
  * Everything input with pull-up except:
  * PA0  - Digital input.                        (ICU input)
  * PA4  - Push Pull output 2MHz.                (ICU LED)
+ * PA7  - Digital input.                        (IR RX from Preamp)
  * PA9  - Alternate Push Pull output 50MHz.     (USART1 TX)
  * PA10 - Digital input.                        (USART1 RX)
  */
@@ -96,7 +98,7 @@
  * Port B setup.
  * Everything input with pull-up except:
  * PB0  - Push Pull output 2MHz.                (LED via GPIO)
- * PB9  - Alternate Push Pull output 50MHz      (IR TX via Timer)
+ * PB9  - Alternate Push Pull output 50MHz      (IR TX via TIMER)
  */
 #define VAL_GPIOBCRL            0x88888882      /*  PB7...PB0 */
 #define VAL_GPIOBCRH            0x888888B8      /* PB15...PB8 */

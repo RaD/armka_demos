@@ -3,6 +3,11 @@
 #include <chprintf.h>
 #include <stm32f10x.h>
 
+//#define USE_TIM17_PWM   1
+#define PWM_FREQ        36000
+#define PWM_WIDTH       0.33
+#define PWM4_CHANNEL    3
+
 // Simple thread for green LED blinkng.
 static WORKING_AREA(waBlinker, 128);
 static msg_t blinker(void *arg) {
@@ -15,6 +20,7 @@ static msg_t blinker(void *arg) {
     return 0;
 }
 
+#ifdef USE_TIM17_PWM
 void meandre_tim17(void) {
     //Enable clock for the timer
     RCC->APB2ENR |= RCC_APB2ENR_TIM17EN;
@@ -26,10 +32,10 @@ void meandre_tim17(void) {
     TIM17->CCMR1 |= (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1);
     // Prescaler keeps zero to allow control PWM frequency
     TIM17->PSC = 0;
-    // PWM Frequency 36 kHz
-    TIM17->ARR = 667 - 1;
-    // Duty cycle: 50%
-    TIM17->CCR1 = 333;
+    // PWM Frequency
+    TIM17->ARR = (uint16_t) (STM32_SYSCLK / PWM_FREQ) + 1;
+    // Duty cycle
+    TIM17->CCR1 = (uint16_t) (TIM17->ARR * PWM_WIDTH);
     // Uncomment to change polarity
     //TIM2->CCER |= TIM_CCER_CC2P;
     // Enable Capture/Compare output 1, ie PB9
@@ -38,29 +44,43 @@ void meandre_tim17(void) {
     TIM17->BDTR |= TIM_BDTR_MOE;
     // Start timer
     TIM17->CR1 |= TIM_CR1_CEN;
-}
 
+    chprintf((BaseSequentialStream *) &SD1, "ARR = %d\n", (uint16_t) (STM32_SYSCLK / PWM_FREQ) + 1);
+    chprintf((BaseSequentialStream *) &SD1, "CCR1 = %d\n", (uint16_t) (TIM17->ARR * PWM_WIDTH));
+}
+#else
+static PWMConfig pwmcfg = {
+    PWM_FREQ,                               /* PWM clock frequency. */
+    (uint16_t) (PWM_FREQ * PWM_WIDTH),      /* Initial PWM period. */
+    NULL,                                   /* Periodic callback pointer. */
+    NULL,                                   /* channel configuration set dynamically below */
+    0                                       /* TIM CR2 register initialization data. */
+#if STM32_PWM_USE_ADVANCED
+    ,0                                      /* TIM BDTR register initialization data. */
+#endif
+};
+#endif
 
 static icucnt_t last_width = 0;
 static icucnt_t last_period = 0;
 
 // Callback for pulse width measurement.
 static void icu_width_cb(ICUDriver *icup) {
-  last_width = icuGetWidth(icup);
+    last_width = icuGetWidth(icup);
 }
 
 // Callback for cycle period measurement.
 static void icu_period_cb(ICUDriver *icup) {
-  last_period = icuGetPeriod(icup);
+    last_period = icuGetPeriod(icup);
 }
 
 static ICUConfig icucfg = {
-  ICU_INPUT_ACTIVE_HIGH,            /* mode: rising edge start the signal */
-  36000,                            /* frequency: 36kHz ICU clock frequency */
-  icu_width_cb,                     /* callback for pulse width measurement */
-  icu_period_cb,                    /* callback for cycle period measurement */
-  NULL,                             /* callback for timer overflow */
-  ICU_CHANNEL_1                     /* timer input channel to be used, ie PA0 */
+    ICU_INPUT_ACTIVE_HIGH,            /* mode: rising edge start the signal */
+    PWM_FREQ,                         /* ICU clock frequency */
+    icu_width_cb,                     /* callback for pulse width measurement */
+    icu_period_cb,                    /* callback for cycle period measurement */
+    NULL,                             /* callback for timer overflow */
+    ICU_CHANNEL_1                     /* timer input channel to be used, ie PA0 */
 };
 
 
@@ -74,7 +94,14 @@ int main(void) {
     // enable serial interface
     sdStart(&SD1, NULL);
 
+#ifdef USE_TIM17_PWM
     meandre_tim17();
+#else
+    PWMChannelConfig chcfg = { PWM_OUTPUT_ACTIVE_HIGH, NULL };
+    pwmcfg.channels[PWM4_CHANNEL] = chcfg;
+    pwmStart(&PWMD4, &pwmcfg);
+    pwmEnableChannel(&PWMD4, PWM4_CHANNEL, (pwmcnt_t) (PWM_FREQ * PWM_WIDTH));
+#endif /* USE_TIM17_PWM */
 
     // Run blinker
     Thread* th_blinker = chThdCreateStatic(waBlinker, sizeof(waBlinker), NORMALPRIO, blinker, NULL);
@@ -86,24 +113,30 @@ int main(void) {
     icuEnable(&ICUD2);
 
     palClearPad(GPIOA, GPIOA_ICU_LED); // on
-    chThdSleepMilliseconds(MS2ST(500));
-
-    chprintf((BaseSequentialStream *) &SD1, "MCU run\n");
+    chThdSleepMilliseconds(500);
 
     // Main thread.
     while (!chThdShouldTerminate()) {
-        chThdSleepMilliseconds(MS2ST(500));
+        chThdSleepMilliseconds(500);
 
         chprintf((BaseSequentialStream *) &SD1, "Period: %d\nWidth: %d\n\n", last_period, last_width);
 
-        if (last_period == 0 && last_width == 0) {
-            palSetPad(GPIOA, GPIOA_ICU_LED); // off
-        } else {
+        if (palReadPad(GPIOA, GPIOA_IR_RX)) {
             palClearPad(GPIOA, GPIOA_ICU_LED); // on
+        } else {
+            palSetPad(GPIOA, GPIOA_ICU_LED); // off
         }
     }
 
+    palSetPad(GPIOA, GPIOA_ICU_LED); // off
+
     icuDisable(&ICUD2);
     icuStop(&ICUD2);
+
+#ifndef USE_TIM17_PWM
+    pwmDisableChannel(&PWMD4, 0);
+    pwmStop(&PWMD4);
+#endif /* USE_TIM17_PWM */
+
     chThdTerminate(th_blinker);
 }
