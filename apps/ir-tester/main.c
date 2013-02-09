@@ -3,9 +3,9 @@
 #include <chprintf.h>
 #include <stm32f10x.h>
 
-//#define USE_TIM17_PWM   1
-#define PWM_FREQ        36000
-#define PWM_WIDTH       0.33
+#define USE_TIM17_PWM   1
+#define PWM_FREQ        1000
+#define PWM_WIDTH       0.5
 #define PWM4_CHANNEL    3
 
 // Simple thread for green LED blinkng.
@@ -51,9 +51,14 @@ void meandre_tim17(void) {
 #else
 static PWMConfig pwmcfg = {
     PWM_FREQ,                               /* PWM clock frequency. */
-    (uint16_t) (PWM_FREQ * PWM_WIDTH),      /* Initial PWM period. */
+    100, //(uint16_t) (PWM_FREQ * PWM_WIDTH),      /* Initial PWM period. */
     NULL,                                   /* Periodic callback pointer. */
-    NULL,                                   /* channel configuration set dynamically below */
+    {                                       /* Channel configuration set dynamically below, */
+        {PWM_OUTPUT_DISABLED, NULL},
+        {PWM_OUTPUT_DISABLED, NULL},
+        {PWM_OUTPUT_DISABLED, NULL},
+        {PWM_OUTPUT_DISABLED, NULL}
+    },
     0                                       /* TIM CR2 register initialization data. */
 #if STM32_PWM_USE_ADVANCED
     ,0                                      /* TIM BDTR register initialization data. */
@@ -100,7 +105,7 @@ int main(void) {
     PWMChannelConfig chcfg = { PWM_OUTPUT_ACTIVE_HIGH, NULL };
     pwmcfg.channels[PWM4_CHANNEL] = chcfg;
     pwmStart(&PWMD4, &pwmcfg);
-    pwmEnableChannel(&PWMD4, PWM4_CHANNEL, (pwmcnt_t) (PWM_FREQ * PWM_WIDTH));
+    pwmEnableChannel(&PWMD4, PWM4_CHANNEL, PWM_PERCENTAGE_TO_WIDTH(&PWMD4, PWM_WIDTH * 10000));
 #endif /* USE_TIM17_PWM */
 
     // Run blinker
