@@ -21,7 +21,7 @@ static msg_t blinker(void *arg) {
 }
 
 #ifdef USE_TIM17_PWM
-void meandre_tim17(void) {
+void prepare_tim17(void) {
     //Enable clock for the timer
     RCC->APB2ENR |= RCC_APB2ENR_TIM17EN;
     // Enable ARR preloading
@@ -33,7 +33,7 @@ void meandre_tim17(void) {
     // Prescaler keeps zero to allow control PWM frequency
     TIM17->PSC = 0;
     // PWM Frequency
-    TIM17->ARR = (uint16_t) (STM32_SYSCLK / PWM_FREQ) + 1;
+    TIM17->ARR = (uint16_t) (STM32_SYSCLK / PWM_FREQ);
     // Duty cycle
     TIM17->CCR1 = (uint16_t) (TIM17->ARR * PWM_WIDTH);
     // Uncomment to change polarity
@@ -45,13 +45,14 @@ void meandre_tim17(void) {
     // Start timer
     TIM17->CR1 |= TIM_CR1_CEN;
 
-    chprintf((BaseSequentialStream *) &SD1, "ARR = %d\n", (uint16_t) (STM32_SYSCLK / PWM_FREQ) + 1);
-    chprintf((BaseSequentialStream *) &SD1, "CCR1 = %d\n", (uint16_t) (TIM17->ARR * PWM_WIDTH));
+    chprintf((BaseSequentialStream *) &SD1, "TIM17->PSC = %d\n", TIM17->PSC);
+    chprintf((BaseSequentialStream *) &SD1, "TIM17->ARR = %d\n", TIM17->ARR);
+    chprintf((BaseSequentialStream *) &SD1, "TIM17->CCR1 = %d\n", TIM17->CCR1);
 }
 #else
 static PWMConfig pwmcfg = {
-    PWM_FREQ,                               /* PWM clock frequency. */
-    100, //(uint16_t) (PWM_FREQ * PWM_WIDTH),      /* Initial PWM period. */
+    STM32_SYSCLK,                           /* PWM clock frequency, PSC register. */
+    (uint16_t) (STM32_SYSCLK / PWM_FREQ) + 1,   /* Initial PWM period. ARR register*/
     NULL,                                   /* Periodic callback pointer. */
     {                                       /* Channel configuration set dynamically below, */
         {PWM_OUTPUT_DISABLED, NULL},
@@ -100,18 +101,23 @@ int main(void) {
     sdStart(&SD1, NULL);
 
 #ifdef USE_TIM17_PWM
-    meandre_tim17();
+    prepare_tim17();
 #else
     PWMChannelConfig chcfg = { PWM_OUTPUT_ACTIVE_HIGH, NULL };
     pwmcfg.channels[PWM4_CHANNEL] = chcfg;
     pwmStart(&PWMD4, &pwmcfg);
-    pwmEnableChannel(&PWMD4, PWM4_CHANNEL, PWM_PERCENTAGE_TO_WIDTH(&PWMD4, PWM_WIDTH * 10000));
+    pwmEnableChannel(&PWMD4, PWM4_CHANNEL,
+        PWM_PERCENTAGE_TO_WIDTH(&PWMD4, PWM_WIDTH * 10000));
+
+    chprintf((BaseSequentialStream *) &SD1, "TIM4->PSC = %d\n", TIM4->PSC);
+    chprintf((BaseSequentialStream *) &SD1, "TIM4->ARR = %d\n", TIM4->ARR);
+    chprintf((BaseSequentialStream *) &SD1, "TIM4->CCR4 = %d\n", TIM4->CCR4);
 #endif /* USE_TIM17_PWM */
 
     // Run blinker
     Thread* th_blinker = chThdCreateStatic(waBlinker, sizeof(waBlinker), NORMALPRIO, blinker, NULL);
 
-    chprintf((BaseSequentialStream *) &SD1, "\nMeandre started\n");
+    chprintf((BaseSequentialStream *) &SD1, "\nDevice started\n");
 
     // Run ICU
     icuStart(&ICUD2, &icucfg);
@@ -124,7 +130,7 @@ int main(void) {
     while (!chThdShouldTerminate()) {
         chThdSleepMilliseconds(500);
 
-        chprintf((BaseSequentialStream *) &SD1, "Period: %d\nWidth: %d\n\n", last_period, last_width);
+        //chprintf((BaseSequentialStream *) &SD1, "Period: %d\nWidth: %d\n\n", last_period, last_width);
 
         if (palReadPad(GPIOA, GPIOA_IR_RX)) {
             palClearPad(GPIOA, GPIOA_ICU_LED); // on
