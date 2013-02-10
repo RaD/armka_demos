@@ -3,9 +3,10 @@
 #include <chprintf.h>
 #include <stm32f10x.h>
 
-#define USE_TIM17_PWM   1
-#define PWM_FREQ        1000
-#define PWM_WIDTH       0.5
+//#define USE_TIM17_PWM   1
+#define MOD_FREQ        36000
+#define PWM_FREQ        50
+#define PWM_WIDTH       0.3
 #define PWM4_CHANNEL    3
 
 // Simple thread for green LED blinkng.
@@ -31,11 +32,11 @@ void prepare_tim17(void) {
     // PWM mode 1: OC1M = 110
     TIM17->CCMR1 |= (TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1);
     // Prescaler keeps zero to allow control PWM frequency
-    TIM17->PSC = 0;
+    TIM17->PSC = (uint16_t) (STM32_SYSCLK / MOD_FREQ) + 1;
     // PWM Frequency
-    TIM17->ARR = (uint16_t) (STM32_SYSCLK / PWM_FREQ);
+    TIM17->ARR = (uint16_t) PWM_FREQ;
     // Duty cycle
-    TIM17->CCR1 = (uint16_t) (TIM17->ARR * PWM_WIDTH);
+    TIM17->CCR1 = (uint16_t) (PWM_FREQ * PWM_WIDTH);
     // Uncomment to change polarity
     //TIM2->CCER |= TIM_CCER_CC2P;
     // Enable Capture/Compare output 1, ie PB9
@@ -51,18 +52,18 @@ void prepare_tim17(void) {
 }
 #else
 static PWMConfig pwmcfg = {
-    STM32_SYSCLK,                           /* PWM clock frequency, PSC register. */
-    (uint16_t) (STM32_SYSCLK / PWM_FREQ) + 1,   /* Initial PWM period. ARR register*/
-    NULL,                                   /* Periodic callback pointer. */
-    {                                       /* Channel configuration set dynamically below, */
+    MOD_FREQ,                           /* PWM clock frequency, PSC register. */
+    PWM_FREQ,                           /* Initial PWM period. ARR register*/
+    NULL,                               /* Periodic callback pointer. */
+    {                                   /* Channel configuration set dynamically below, */
         {PWM_OUTPUT_DISABLED, NULL},
         {PWM_OUTPUT_DISABLED, NULL},
         {PWM_OUTPUT_DISABLED, NULL},
         {PWM_OUTPUT_DISABLED, NULL}
     },
-    0                                       /* TIM CR2 register initialization data. */
+    0                                   /* TIM CR2 register initialization data. */
 #if STM32_PWM_USE_ADVANCED
-    ,0                                      /* TIM BDTR register initialization data. */
+    ,0                                  /* TIM BDTR register initialization data. */
 #endif
 };
 #endif
@@ -82,7 +83,7 @@ static void icu_period_cb(ICUDriver *icup) {
 
 static ICUConfig icucfg = {
     ICU_INPUT_ACTIVE_HIGH,            /* mode: rising edge start the signal */
-    PWM_FREQ,                         /* ICU clock frequency */
+    MOD_FREQ,                         /* ICU clock modulation frequency */
     icu_width_cb,                     /* callback for pulse width measurement */
     icu_period_cb,                    /* callback for cycle period measurement */
     NULL,                             /* callback for timer overflow */
@@ -130,7 +131,7 @@ int main(void) {
     while (!chThdShouldTerminate()) {
         chThdSleepMilliseconds(500);
 
-        //chprintf((BaseSequentialStream *) &SD1, "Period: %d\nWidth: %d\n\n", last_period, last_width);
+        chprintf((BaseSequentialStream *) &SD1, "Period(%d)\tWidth(%d)\n", last_period, last_width);
 
         if (palReadPad(GPIOA, GPIOA_IR_RX)) {
             palClearPad(GPIOA, GPIOA_ICU_LED); // on

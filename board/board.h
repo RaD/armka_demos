@@ -52,10 +52,11 @@
 /*
  * IO pins assignments.
  */
-#define GPIOB_ARMKA_LED         0
+#define GPIOA_ICU_INPUT         0
 #define GPIOA_ICU_LED           4
-#define GPIOB_IR_TX             9
 #define GPIOA_IR_RX             7
+#define GPIOB_ARMKA_LED         0
+#define GPIOB_IR_TX             9
 
 
 /*
@@ -90,7 +91,7 @@
  * PA9  - Alternate Push Pull output 50MHz.     (USART1 TX)
  * PA10 - Digital input.                        (USART1 RX)
  */
-#define VAL_GPIOACRL            0x88828884      /*  PA7...PA0 */
+#define VAL_GPIOACRL            0x88828888      /*  PA7...PA0 */
 #define VAL_GPIOACRH            0x888884B8      /* PA15...PA8 */
 #define VAL_GPIOAODR            0xFFFFFFFF
 
