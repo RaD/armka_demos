@@ -54,7 +54,7 @@
  */
 #define GPIOA_ICU_INPUT         0
 #define GPIOA_ICU_LED           4
-#define GPIOA_IR_RX             7
+#define GPIOA_IR_RX             8
 #define GPIOB_ARMKA_LED         0
 #define GPIOB_IR_TX             9
 

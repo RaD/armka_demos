@@ -4,9 +4,9 @@
 #include <stm32f10x.h>
 
 //#define USE_TIM17_PWM   1
-#define MOD_FREQ        36000
-#define PWM_FREQ        50
-#define PWM_WIDTH       0.3
+#define MOD_FREQ        3650000
+#define PWM_FREQ        100
+#define PWM_WIDTH       0.5
 #define PWM4_CHANNEL    3
 
 // Simple thread for green LED blinkng.
@@ -45,10 +45,6 @@ void prepare_tim17(void) {
     TIM17->BDTR |= TIM_BDTR_MOE;
     // Start timer
     TIM17->CR1 |= TIM_CR1_CEN;
-
-    chprintf((BaseSequentialStream *) &SD1, "TIM17->PSC = %d\n", TIM17->PSC);
-    chprintf((BaseSequentialStream *) &SD1, "TIM17->ARR = %d\n", TIM17->ARR);
-    chprintf((BaseSequentialStream *) &SD1, "TIM17->CCR1 = %d\n", TIM17->CCR1);
 }
 #else
 static PWMConfig pwmcfg = {
@@ -103,6 +99,10 @@ int main(void) {
 
 #ifdef USE_TIM17_PWM
     prepare_tim17();
+
+    chprintf((BaseSequentialStream *) &SD1, "TIM17->PSC = %d\n", TIM17->PSC);
+    chprintf((BaseSequentialStream *) &SD1, "TIM17->ARR = %d\n", TIM17->ARR);
+    chprintf((BaseSequentialStream *) &SD1, "TIM17->CCR1 = %d\n", TIM17->CCR1);
 #else
     PWMChannelConfig chcfg = { PWM_OUTPUT_ACTIVE_HIGH, NULL };
     pwmcfg.channels[PWM4_CHANNEL] = chcfg;
